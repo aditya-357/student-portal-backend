@@ -1,0 +1,127 @@
+body {
+    margin: 0;
+    background-color: #cbd6df;
+    font-family: Arial, sans-serif;
+}
+
+/* Center whole card */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Main card */
+.card {
+    background-color: #4f7f9c;
+    width: 400px;
+    padding: 50px 60px;
+    border-radius: 40px;
+    box-shadow: 15px 15px 35px rgba(0,0,0,0.25);
+    text-align: center;
+}
+
+/* Heading */
+.card h1 {
+    color: white;
+    font-size: 30px;
+    margin-bottom: 50px;  /* controls spacing below heading */
+}
+
+/* Toggle section */
+.toggle {
+    margin-bottom: 50px;
+}
+
+.toggle button {
+    padding: 10px 40px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 5px;
+    background-color: #e6e6e6;
+}
+
+.toggle .active {
+    background-color: #46c4fa;
+    color: white;
+}
+
+/* Form layout */
+.form {
+    text-align: left;
+}
+
+/* Each row */
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.form-group label {
+    width: 130px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.form-group input {
+    flex: 1;
+    border: none;
+    border-bottom: 2px solid white;
+    background: transparent;
+    color: white;
+    font-size: 18px;
+    padding: 0px;
+}
+
+.form-group input:focus {
+    outline: none;
+}
+
+/* Forgot password */
+.forgot {
+    text-align: right;
+    margin-bottom: 30px;
+}
+
+.forgot a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+/* Login button */
+#loginBtn {
+    padding: 10px 30px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    background: #e6e6e6;
+    font-weight: bold;
+    font-size: 16px;
+}
+#loginBtn:hover {
+    background: #46c4fa;   /* gray on hover */
+}
+
+#sendOtpBtn {
+    padding: 10px 30px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    background: #e6e6e6;
+    font-weight: bold;
+    font-size: 16px;
+}
+#sendOtpBtn:hover {
+    background: #46c4fa;   /* gray on hover */
+}
+button:disabled {
+    background: #999;
+    cursor: not-allowed;
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+
+<div class="topbar">
+    <div class="welcome">
+    Welcome   {{ student_name }}
+    </div>
+
+    <div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+
+    </div>
+</div>
+
+<div class="layout">
+
+    <div class="sidebar">
+        <ul>
+            <li onclick="setActive(this); loadOverview()">Overview</li>
+            <li onclick="setActive(this); loadAcademic()">Academic</li>
+            <li onclick="setActive(this); loadFees()">Fees</li>
+            <li onclick="setActive(this); loadHostel()">Hostel</li>
+            <li onclick="setActive(this); loadProfile()">My Profile</li>
+            <li onclick="setActive(this); loadGuardian()">Guardian</li>
+            <li onclick="setActive(this); loadMentor()">Mentor</li>
+
+        </ul>
+    </div>
+
+    <div class="content" id="content">
+        <h2>Welcome to your Dashboard</h2>
+        <p>Select an option from the left menu.</p>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
