@@ -4,6 +4,18 @@
 # def get_connection():
 #     return psycopg2.connect(**DB_CONFIG)
 
+# import psycopg2
+# import os
+# from dotenv import load_dotenv
+
+# load_dotenv()
+
+# def get_connection():
+#     conn = psycopg2.connect(
+#         os.getenv("DATABASE_URL")
+#     )
+#     return conn
+
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -12,6 +24,7 @@ load_dotenv()
 
 def get_connection():
     conn = psycopg2.connect(
-        os.getenv("DATABASE_URL")
+        os.getenv("DATABASE_URL"),
+        sslmode="require"
     )
     return conn
