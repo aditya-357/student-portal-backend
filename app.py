@@ -839,72 +839,176 @@ def admin_logout():
 
 
 
+# from utils import generate_otp, otp_expiry_time
+# from email_service import send_email
+
+# @app.route("/student/forgot-password", methods=["POST"])
+# def forgot_password():
+#     data = request.json
+#     student_id = data["student_id"]
+
+#     conn = get_connection()
+#     cur = conn.cursor()
+
+#     cur.execute("SELECT email FROM student WHERE student_id=%s", (student_id,))
+#     row = cur.fetchone()
+#     if not row:
+#         return {"message": "If student exists, OTP sent"}, 200
+
+#     otp = generate_otp()
+#     expiry = otp_expiry_time()
+
+#     cur.execute("""
+#         INSERT INTO password_reset_otp (student_id, otp, expires_at)
+#         VALUES (%s,%s,%s)
+#         ON CONFLICT (student_id)
+#         DO UPDATE SET otp=%s, expires_at=%s
+#     """, (student_id, otp, expiry, otp, expiry))
+
+#     send_email(
+#         row[0],
+#         "Password Reset OTP",
+#         f"Your OTP is {otp}. Valid for 10 minutes."
+#     )
+
+#     conn.commit()
+#     return {"message": "OTP sent"}
+
+
+# from werkzeug.security import generate_password_hash
+
+# @app.route("/student/reset-password", methods=["POST"])
+# def reset_password():
+#     data = request.json
+
+#     conn = get_connection()
+#     cur = conn.cursor()
+
+#     cur.execute("""
+#         SELECT otp, expires_at FROM password_reset_otp
+#         WHERE student_id=%s
+#     """, (data["student_id"],))
+
+#     row = cur.fetchone()
+#     if not row or row[0] != data["otp"] or row[1] < datetime.now():
+#         return {"message": "Invalid or expired OTP"}, 400
+
+#     hashed = generate_password_hash(data["new_password"])
+
+#     cur.execute("""
+#         UPDATE student_login SET password=%s WHERE student_id=%s
+#     """, (hashed, data["student_id"]))
+
+#     cur.execute("""
+#         DELETE FROM password_reset_otp WHERE student_id=%s
+#     """, (data["student_id"],))
+
+#     conn.commit()
+#     return {"message": "Password updated successfully"}
+
 from utils import generate_otp, otp_expiry_time
 from email_service import send_email
-
+from datetime import timezone
+ 
 @app.route("/student/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.json
-    student_id = data["student_id"]
-
+    student_id = data.get("student_id")
+ 
+    if not student_id:
+        return {"message": "Student ID required"}, 400
+ 
     conn = get_connection()
     cur = conn.cursor()
-
-    cur.execute("SELECT email FROM student WHERE student_id=%s", (student_id,))
-    row = cur.fetchone()
-    if not row:
-        return {"message": "If student exists, OTP sent"}, 200
-
-    otp = generate_otp()
-    expiry = otp_expiry_time()
-
-    cur.execute("""
-        INSERT INTO password_reset_otp (student_id, otp, expires_at)
-        VALUES (%s,%s,%s)
-        ON CONFLICT (student_id)
-        DO UPDATE SET otp=%s, expires_at=%s
-    """, (student_id, otp, expiry, otp, expiry))
-
-    send_email(
-        row[0],
-        "Password Reset OTP",
-        f"Your OTP is {otp}. Valid for 10 minutes."
-    )
-
-    conn.commit()
-    return {"message": "OTP sent"}
-
-
+ 
+    try:
+        cur.execute("SELECT email FROM student WHERE student_id=%s", (student_id,))
+        row = cur.fetchone()
+ 
+        if not row:
+            return {"message": "If student exists, OTP sent"}, 200
+ 
+        otp = generate_otp()
+        expiry = otp_expiry_time()
+ 
+        cur.execute("""
+            INSERT INTO password_reset_otp (student_id, otp, expires_at)
+            VALUES (%s,%s,%s)
+            ON CONFLICT (student_id)
+            DO UPDATE SET otp=%s, expires_at=%s
+        """, (student_id, otp, expiry, otp, expiry))
+ 
+        conn.commit()
+ 
+        email_sent = send_email(
+            row[0],
+            "Password Reset OTP",
+            f"Your OTP is {otp}. Valid for 10 minutes."
+        )
+ 
+        if not email_sent:
+            return {"message": "Failed to send OTP email. Please try again."}, 500
+ 
+        return {"message": "OTP sent"}
+ 
+    except Exception as e:
+        conn.rollback()
+        print(f"Forgot password error: {e}")
+        return {"message": f"Error: {str(e)}"}, 500
+ 
+    finally:
+        cur.close()
+        conn.close()
+ 
+ 
 from werkzeug.security import generate_password_hash
-
+ 
 @app.route("/student/reset-password", methods=["POST"])
 def reset_password():
     data = request.json
-
+ 
     conn = get_connection()
     cur = conn.cursor()
-
-    cur.execute("""
-        SELECT otp, expires_at FROM password_reset_otp
-        WHERE student_id=%s
-    """, (data["student_id"],))
-
-    row = cur.fetchone()
-    if not row or row[0] != data["otp"] or row[1] < datetime.now():
-        return {"message": "Invalid or expired OTP"}, 400
-
-    hashed = generate_password_hash(data["new_password"])
-
-    cur.execute("""
-        UPDATE student_login SET password=%s WHERE student_id=%s
-    """, (hashed, data["student_id"]))
-
-    cur.execute("""
-        DELETE FROM password_reset_otp WHERE student_id=%s
-    """, (data["student_id"],))
-
-    conn.commit()
-    return {"message": "Password updated successfully"}
+ 
+    try:
+        cur.execute("""
+            SELECT otp, expires_at FROM password_reset_otp
+            WHERE student_id=%s
+        """, (data["student_id"],))
+ 
+        row = cur.fetchone()
+ 
+        if not row:
+            return {"message": "Invalid or expired OTP"}, 400
+ 
+        # Fix: compare using UTC time
+        now_utc = datetime.now(timezone.utc)
+        expires_at = row[1].replace(tzinfo=timezone.utc) if row[1].tzinfo is None else row[1]
+ 
+        if row[0] != data["otp"] or expires_at < now_utc:
+            return {"message": "Invalid or expired OTP"}, 400
+ 
+        hashed = generate_password_hash(data["new_password"])
+ 
+        cur.execute("""
+            UPDATE student_login SET password=%s WHERE student_id=%s
+        """, (hashed, data["student_id"]))
+ 
+        cur.execute("""
+            DELETE FROM password_reset_otp WHERE student_id=%s
+        """, (data["student_id"],))
+ 
+        conn.commit()
+        return {"message": "Password updated successfully"}
+ 
+    except Exception as e:
+        conn.rollback()
+        print(f"Reset password error: {e}")
+        return {"message": f"Error: {str(e)}"}, 500
+ 
+    finally:
+        cur.close()
+        conn.close()
 
 
 @app.route("/forgot-password")
